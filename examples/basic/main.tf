@@ -8,18 +8,18 @@ module "sagemaker_endpoint" {
   # endpoint_name  = "custom-endpoint"
 }
 
-output "endpoint_name" {
-  value = module.sagemaker_endpoint.endpoint_name
+output "bucket_name" {
+  value = module.sagemaker_endpoint.bucket_name
 }
 
-output "endpoint_arn" {
-  value = module.sagemaker_endpoint.endpoint_arn
-}
+# output "endpoint_arn" {
+#   value = module.sagemaker_endpoint.endpoint_arn
+# }
 
-output "model_name" {
-  value = module.sagemaker_endpoint.model_name
-}
+# output "model_name" {
+#   value = module.sagemaker_endpoint.model_name
+# }
 
-output "model_arn" {
-  value = module.sagemaker_endpoint.model_arn
-}
+# output "model_arn" {
+#   value = module.sagemaker_endpoint.model_arn
+# }
