@@ -1,25 +1,29 @@
+# ---------------------------------------------------------------------------------------------------------------------
+# Example Deploy from HuggingFace Hub
+# ---------------------------------------------------------------------------------------------------------------------
+
+provider "aws" {
+  region  = "us-east-1"
+  profile = "hf-sm"
+}
+
 module "sagemaker_endpoint" {
-  source = "../.."
+  source               = "../.."
+  endpoint_name_prefix = "tiny-llama"
+  hf_model_id          = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+  instance_type        = "ml.g5.xlarge"
 
-  # All variables have default values, so we don't need to specify anything here.
-  # However, you can override any variable if needed, for example:
-  # region         = "us-east-1"
-  # model_name     = "custom-model"
-  # endpoint_name  = "custom-endpoint"
+  tgi_config = {
+    max_input_tokens       = 4000
+    max_total_tokens       = 4096
+    max_batch_total_tokens = 6144
+  }
 }
 
-output "bucket_name" {
-  value = module.sagemaker_endpoint.bucket_name
+output "endpoint_name" {
+  value = module.sagemaker_endpoint.sagemaker_endpoint_name
 }
 
-# output "endpoint_arn" {
-#   value = module.sagemaker_endpoint.endpoint_arn
-# }
-
-# output "model_name" {
-#   value = module.sagemaker_endpoint.model_name
-# }
-
-# output "model_arn" {
-#   value = module.sagemaker_endpoint.model_arn
-# }
+output "container" {
+  value = module.sagemaker_endpoint.container
+}

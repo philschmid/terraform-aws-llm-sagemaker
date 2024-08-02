@@ -1,78 +1,108 @@
 package test
 
 import (
+	"context"
+	"encoding/json"
+	"log"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sagemakerruntime"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
-	// "github.com/aws/aws-sdk-go/aws"
-	// "github.com/aws/aws-sdk-go/aws/session"
-	// "github.com/aws/aws-sdk-go/service/sagemaker"
 )
 
-func TestSageMakerEndpoint(t *testing.T) {
-	terraformOptions := &terraform.Options{
-		TerraformDir: "../examples/basic",
+// Run example
+// AWS_PROFILE=hf-sm AWS_DEFAULT_REGION=us-east-1 go test -v
+
+// Helper function to create Terraform options
+func createTerraformOptions() *terraform.Options {
+	return &terraform.Options{
+		TerraformDir: "../",
+		Vars: map[string]interface{}{
+			"endpoint_name_prefix": "tiny-llama",
+			"hf_model_id":          "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+			"instance_type":        "ml.g5.xlarge",
+			"tgi_config": map[string]interface{}{
+				"max_input_tokens":       4000,
+				"max_total_tokens":       4096,
+				"max_batch_total_tokens": 6144,
+			},
+		},
 	}
-
-	// destroys resources after the test completes, regardless of whether the test passes or fails.
-	defer terraform.Destroy(t, terraformOptions)
-
-	// Run `terraform init` and `terraform apply`
-	terraform.InitAndApply(t, terraformOptions)
-
-	// Get the endpoint name from Terraform output
-	endpointName := terraform.Output(t, terraformOptions, "bucket_name")
-
-	// assert it is not empty
-	assert.Empty(t, endpointName, "Endpoint name should not be empty")
 }
 
-// package test
+// Helper function to send a request to the SageMaker endpoint using AWS SDK
+func invokeSageMakerEndpoint(endpointName string, body map[string]interface{}) (map[string]interface{}, error) {
+	// Load the AWS configuration using environment variables
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
+	}
 
-// import (
-// 	"github.com/aws/aws-sdk-go/aws"
-// 	"github.com/aws/aws-sdk-go/aws/session"
-// 	"github.com/aws/aws-sdk-go/service/sagemaker"
-// 	"github.com/gruntwork-io/terratest/modules/terraform"
-// 	"github.com/stretchr/testify/assert"
-// 	"testing"
-// )
+	// Create a SageMaker Runtime client
+	sageMakerClient := sagemakerruntime.NewFromConfig(cfg)
 
-// func TestSageMakerEndpoint(t *testing.T) {
-// 	terraformOptions := &terraform.Options{
-// 		TerraformDir: "../examples/basic",
-// 	}
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// destroys resources after the test completes, regardless of whether the test passes or fails.
-// 	defer terraform.Destroy(t, terraformOptions)
+	input := &sagemakerruntime.InvokeEndpointInput{
+		EndpointName: aws.String(endpointName),
+		ContentType:  aws.String("application/json"),
+		Body:         jsonBody,
+	}
 
-// 	// Run `terraform init` and `terraform apply`
-// 	terraform.InitAndApply(t, terraformOptions)
+	result, err := sageMakerClient.InvokeEndpoint(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// Get the endpoint name from Terraform output
-// 	endpointName := terraform.Output(t, terraformOptions, "endpoint_name")
+	var response map[string]interface{}
+	if err := json.Unmarshal(result.Body, &response); err != nil {
+		return nil, err
+	}
 
-// 	// Create AWS session
-// 	sess, err := session.NewSession(&aws.Config{
-// 		Region: aws.String("us-west-2"), // Replace with your AWS region
-// 	})
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	return response, nil
+}
 
-// 	// Create SageMaker client
-// 	sagemakerClient := sagemaker.New(sess)
+func TestSageMakerPlan(t *testing.T) {
+	t.Parallel()
 
-// 	// Describe the endpoint to check if it exists and is in service
-// 	describeEndpointInput := &sagemaker.DescribeEndpointInput{
-// 		EndpointName: aws.String(endpointName),
-// 	}
-// 	describeEndpointOutput, err := sagemakerClient.DescribeEndpoint(describeEndpointInput)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	terraformOptions := createTerraformOptions()
 
-// 	// Assert that the endpoint status is "InService"
-// 	assert.Equal(t, "InService", *describeEndpointOutput.EndpointStatus, "Endpoint should be in service")
-// }
+	planStdout := terraform.InitAndPlan(t, terraformOptions)
+	expectedContainer := "763104351884.dkr.ecr.us-east-1.amazonaws.com/huggingface-pytorch-tgi-inference:2.3.0-gpu-py310-cu121-ubuntu22.04"
+
+	assert.Contains(t, planStdout, expectedContainer, "Container image should be present in the plan")
+
+}
+
+func TestSageMakerEndpointDeployment(t *testing.T) {
+	t.Parallel()
+
+	terraformOptions := createTerraformOptions()
+	defer terraform.Destroy(t, terraformOptions)
+
+	terraform.InitAndApply(t, terraformOptions)
+
+	endpointName := terraform.Output(t, terraformOptions, "sagemaker_endpoint_name")
+
+	// Define the request body
+	requestBody := map[string]interface{}{
+		"messages": []map[string]string{
+			{"role": "system", "content": "You are a helpful assistant."},
+			{"role": "user", "content": "What is deep learning?"},
+		},
+	}
+
+	// Send request to the SageMaker endpoint
+	response, err := invokeSageMakerEndpoint(endpointName, requestBody)
+	// print the response
+	log.Printf("Response: %v", response)
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+
+}

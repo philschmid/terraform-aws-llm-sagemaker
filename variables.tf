@@ -1,9 +1,3 @@
-variable "region" {
-  description = "The AWS region to deploy to"
-  type        = string
-  default     = "us-east-2"
-}
-
 variable "endpoint_name_prefix" {
   description = "Prefix for the name of the SageMaker endpoint"
   type        = string
@@ -12,7 +6,7 @@ variable "endpoint_name_prefix" {
 variable "llm_container" {
   description = "URI of the Docker image containing the model"
   type        = string
-  default     = "763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-inference:1.5.1-cpu-py3"
+  default     = null
 }
 
 variable "hf_model_id" {
@@ -26,28 +20,29 @@ variable "hf_token" {
   default     = null
 }
 
-variable "max_input_tokens" {
-  description = "The maximum number of tokens that can be passed to the model"
-  type        = number
-  default     = 2048
-}
-
-variable "max_total_tokens" {
-  description = "The maximum number of tokens the model can generate"
-  type        = number
-  default     = 4096
-}
-
-variable "MAX_BATCH_TOTAL_TOKENS" {
-  description = "The maximum number of tokens in batch for continous batching"
-  type        = number
-  default     = 8192
+variable "tgi_config" {
+  description = "The configuration for the TGI model"
+  type = object({
+    max_input_tokens       = number
+    max_total_tokens       = number
+    max_batch_total_tokens = number
+  })
+  default = {
+    max_input_tokens       = 2048
+    max_total_tokens       = 4096
+    max_batch_total_tokens = 8192
+  }
 }
 
 variable "instance_type" {
   description = "The EC2 instance type to deploy this Model to. For example, `ml.g5.xlarge`."
   type        = string
   default     = null
+
+  validation {
+    condition     = contains(["ml.g5.xlarge", "ml.g5.2xlarge", "ml.g5.4xlarge", "ml.g5.12xlarge", "ml.g5.48xlarge", "ml.g6.xlarge", "ml.g6.2xlarge", "ml.g6.4xlarge", "ml.g6.12xlarge", "ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge"], var.instance_type)
+    error_message = "Valid values for instance_type are ml.g5.xlarge, ml.g5.2xlarge, ml.g5.4xlarge, ml.g5.12xlarge, ml.g5.48xlarge, ml.g6.xlarge, ml.g6.2xlarge, ml.g6.4xlarge, ml.g6.12xlarge, ml.g6.48xlarge, ml.p4d.24xlarge, ml.p5.48xlarge"
+  }
 }
 
 variable "instance_count" {
@@ -68,21 +63,21 @@ variable "tags" {
   default     = {}
 }
 
-# variable "autoscaling" {
-#   description = "A Object which defines the autoscaling target and policy for our SageMaker Endpoint. Required keys are `max_capacity` and `scaling_target_invocations` "
-#   type = object({
-#     min_capacity               = optional(number),
-#     max_capacity               = number,
-#     scaling_target_invocations = optional(number),
-#     scale_in_cooldown          = optional(number),
-#     scale_out_cooldown         = optional(number),
-#   })
+variable "autoscaling" {
+  description = "A Object which defines the autoscaling target and policy for our SageMaker Endpoint. Required keys are `max_capacity` and `scaling_target_invocations` "
+  type = object({
+    min_capacity               = optional(number),
+    max_capacity               = number,
+    scaling_target_invocations = optional(number),
+    scale_in_cooldown          = optional(number),
+    scale_out_cooldown         = optional(number),
+  })
 
-#   default = {
-#     min_capacity               = 1
-#     max_capacity               = null
-#     scaling_target_invocations = null
-#     scale_in_cooldown          = 300
-#     scale_out_cooldown         = 66
-#   }
-# }
+  default = {
+    min_capacity               = 1
+    max_capacity               = null
+    scaling_target_invocations = null
+    scale_in_cooldown          = 300
+    scale_out_cooldown         = 66
+  }
+}
