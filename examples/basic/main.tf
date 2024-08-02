@@ -3,8 +3,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 provider "aws" {
-  region  = "us-east-1"
-  profile = "hf-sm"
+  region = "us-east-1"
 }
 
 module "sagemaker_endpoint" {
