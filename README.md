@@ -11,7 +11,7 @@ With this module you can deploy Llama 3, Mistral, Mixtral, Command and many more
 ```hcl
 module "sagemaker-huggingface" {
   source               = "philschmid/sagemaker-huggingface/aws"
-  version              = "0.5.0"
+  version              = "0.1.0"
   endpoint_name_prefix = "tiny-llama"
   hf_model_id          = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
   instance_type        = "ml.g5.xlarge"
