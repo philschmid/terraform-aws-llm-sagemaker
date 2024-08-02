@@ -9,9 +9,9 @@ provider "aws" {
 
 module "sagemaker_endpoint" {
   source               = "../.."
-  endpoint_name_prefix = "tiny-llama"
-  hf_model_id          = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-  instance_type        = "ml.g5.xlarge"
+  endpoint_name_prefix = "llama3"
+  hf_model_id          = "meta-llama/Meta-Llama-3-8B-Instruct"
+  instance_type        = "ml.g5.2xlarge"
 
   tgi_config = {
     max_input_tokens       = 4000

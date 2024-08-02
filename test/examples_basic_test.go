@@ -21,9 +21,9 @@ func createTerraformOptions() *terraform.Options {
 	return &terraform.Options{
 		TerraformDir: "../",
 		Vars: map[string]interface{}{
-			"endpoint_name_prefix": "tiny-llama",
-			"hf_model_id":          "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-			"instance_type":        "ml.g5.xlarge",
+			"endpoint_name_prefix": "llama3",
+			"hf_model_id":          "meta-llama/Meta-Llama-3-8B-Instruct",
+			"instance_type":        "ml.g5.2xlarge",
 			"tgi_config": map[string]interface{}{
 				"max_input_tokens":       4000,
 				"max_total_tokens":       4096,
@@ -100,7 +100,6 @@ func TestSageMakerEndpointDeployment(t *testing.T) {
 
 	// Send request to the SageMaker endpoint
 	response, err := invokeSageMakerEndpoint(endpointName, requestBody)
-	// print the response
 	log.Printf("Response: %v", response)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
