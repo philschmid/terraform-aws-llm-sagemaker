@@ -2,11 +2,12 @@
 
 ```hcl
 module "huggingface_sagemaker" {
-  source               = "philschmid/sagemaker-huggingface/aws"
-  version              = "0.5.0"
-  endpoint_name_prefix = "tiny-llama"
-  hf_model_id          = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-  instance_type        = "ml.g5.xlarge"
+  source               = "philschmid/llm-sagemaker/aws"
+  version              = "0.1.0"
+  endpoint_name_prefix = "llama3"
+  hf_model_id          = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+  hf_token             = "YOUR_HF_TOKEN_WITH_ACCESS_TO_THE_MODEL"
+  instance_type        = "ml.g5.2xlarge"
   instance_count       = 1 # default is 1
 
   tgi_config = {
