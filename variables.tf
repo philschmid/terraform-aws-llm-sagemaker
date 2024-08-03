@@ -18,6 +18,7 @@ variable "hf_token" {
   description = "The Hugging Face API token"
   type        = string
   default     = null
+  sensitive   = true
 }
 
 variable "tgi_config" {
