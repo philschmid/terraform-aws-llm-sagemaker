@@ -1,6 +1,6 @@
 # LLM SageMaker Module
 
-Terraform module for easily deploy open LLMs from [Hugging Face](hf.co/models) to [Amazon SageMaker](https://aws.amazon.com/de/sagemaker/) real-time endpoints. This module will create all the necessary resources to deploy a model to Amazon SageMaker including IAM roles, if not provided, SageMaker Model, SageMaker Endpoint Configuration, SageMaker endpoint.
+[Terraform module](https://registry.terraform.io/modules/philschmid/llm-sagemaker/aws/latest) for easily deploy open LLMs from [Hugging Face](hf.co/models) to [Amazon SageMaker](https://aws.amazon.com/de/sagemaker/) real-time endpoints. This module will create all the necessary resources to deploy a model to Amazon SageMaker including IAM roles, if not provided, SageMaker Model, SageMaker Endpoint Configuration, SageMaker endpoint.
 
 With this module you can deploy Llama 3, Mistral, Mixtral, Command and many more models from Hugging Face to Amazon SageMaker.
 
